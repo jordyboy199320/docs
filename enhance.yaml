@@ -1,0 +1,1124 @@
+---
+openapi: "3.0.1"
+
+info:
+  title: /media/enhance
+  version: v1.1
+  description: |+
+    ---
+    The Enhance API is designed to improve the quality of your media.  It will
+    create a new media file that has been enhanced by:
+
+    - dialog leveling
+    - loudness correction
+    - noise suppression
+    - sibilance reduction
+    - hum reduction
+
+    Available Methods:
+    - [POST /media/enhance](#operation/StartEnhancing) to start enhancing
+    - [GET /media/enhance](#operation/GetEnhanceResults) to retrieve the results
+
+    See the [Enhancing Media](/developers/media-processing/quick-start/enhancing-media) Quick Start for
+    a tutorial on how to get started with this API.
+
+servers:
+  - url: https://api.dolby.com
+
+security:
+  - x-api-key: []
+
+paths:
+  /media/enhance:
+    post:
+      summary: Start Enhancing
+      description: |+
+        **POST /media/enhance**
+
+        Start enhancing to improve your media.  
+
+        The `input` location for your source media file as well as the
+        `output` location for the processed result are required.
+
+        This is an asynchronous operation so you will receive a `job_id` where you
+        can retrieve the results when enhancement is complete.
+
+        There are additional optional parameters that can be provided to
+        control and select the type of enhancements made. See the samples
+        for some examples of what requests and responses look like.
+      operationId: StartEnhancing
+      security:
+        - x-api-key: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartEnhancingRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/StandardResponse200"
+        "400":
+          $ref: "#/components/responses/StandardError400"
+        "401":
+          $ref: "#/components/responses/StandardError401"
+        "404":
+          $ref: "#/components/responses/StandardError404"
+        "405":
+          $ref: "#/components/responses/StandardError405"
+        "500":
+          $ref: "#/components/responses/Standard5XXError"
+      x-code-samples:
+        - lang: "curl"
+          source: |
+            curl -X POST "https://api.dolby.com/media/enhance" \
+                --header "x-api-key: $DOLBY_API_KEY"
+                --data '{
+                    "input": "dlb://in/example.mp3"
+                    "output": "dlb://out/example-enhanced.mp3"
+                  }'
+        - lang: "Python"
+          source: |
+            import os
+            import requests
+
+            url = "https://api.dolby.com/media/enhance"
+            headers = {
+              "x-api-key": os.environ["DOLBYIO_API_KEY"],
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            }
+
+            body = {
+              "input" : os.environ["DOLBYIO_INPUT"],
+              "output" : os.environ["DOLBYIO_OUTPUT"]
+            }
+
+            response = requests.post(url, json=body, headers=headers)
+            response.raise_for_status()
+            print(response.json()["job_id"])
+        - lang: "Node.js"
+          source: |
+            const axios = require('axios').default;
+
+            const config = {
+                method: 'post',
+                url: 'https://api.dolby.com/media/enhance',
+                headers: {
+                    'x-api-key': process.env.DOLBYIO_API_KEY,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                data: {
+                    input: 'dlb://in/example.mp3',
+                    output: 'dlb://out/example-enhanced.mp3'
+                }
+            };
+
+            axios(config)
+                .then(function (response) {
+                    console.log(response.data.job_id);
+                })
+                .catch(function (error) {
+                    console.log(error);
+            });
+
+    get:
+      summary: Get Enhance Results
+      description: |+
+        For a given job_id, this method will check if the processing task has
+        completed and return the enhanced results.
+
+        When the **status** is *Success* you'll be able to retrieve your
+        result from the **output** location you provided in the original
+        `POST`.
+      operationId: GetEnhanceResults
+      security:
+        - x-api-key: []
+      parameters:
+        - $ref: "#/components/parameters/StandardGetJob"
+      responses:
+        "200":
+          description: Valid response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEnhanceResultsResponse"
+        "400":
+          $ref: "#/components/responses/StandardError400"
+        "401":
+          $ref: "#/components/responses/StandardError401"
+        "404":
+          $ref: "#/components/responses/StandardError404"
+        "500":
+          $ref: "#/components/responses/Standard5XXError"
+      x-code-samples:
+        - lang: "curl"
+          source: |
+            curl -X GET "https://api.dolby.com/media/analyze?job_id=$JOB_ID" \
+                --header "x-api-key: $DOLBY_API_KEY"
+        - lang: "Python"
+          source: |
+            import os
+            import requests
+
+            url = "https://api.dolby.com/media/enhance"
+            headers = {
+              "x-api-key": os.environ["DOLBYIO_API_KEY"],
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            }
+
+            params = {
+              "job_id": os.environ["DOLBYIO_JOB_ID"]
+            }
+
+            response = requests.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            print(response.json())
+        - lang: "Node.js"
+          source: |
+
+            const axios = require('axios').default;
+
+            const config = {
+                method: 'get',
+                url: 'https://api.dolby.com/media/enhance',
+                headers: {
+                    'x-api-key': process.env.DOLBYIO_API_KEY,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                params: {
+                    job_id: process.env.DOLBYIO_JOB_ID
+                }
+            };
+
+            axios(config)
+                .then(function (response) {
+                    console.log(JSON.stringify(response.data, null, 4));
+                })
+                .catch(function (error) {
+                    console.log(error);
+            });
+
+components:
+  schemas:
+    # ******************************************************************************
+    # '#/components/schemas/StartEnhancingRequest'
+    # ******************************************************************************
+    StartEnhancingRequest:
+      description: Request body for Enhance API.
+      type: object
+      properties:
+        input:
+          $ref: "#/components/schemas/MediaInputLocation"
+        output:
+          $ref: "#/components/schemas/Location"
+        content:
+          $ref: "#/components/schemas/ContentSettings"
+        audio:
+          $ref: "#/components/schemas/AudioSettings"
+      required:
+        - input
+        - output
+
+    # ******************************************************************************
+    # '#/components/schemas/ContentSettings' (Request)
+    # ******************************************************************************
+    ContentSettings:
+      description: |
+        Providing a category for the content will configure the processing to use settings that
+        aremost suitable for that type of media recording.
+
+        If not specified, the algorithm will choose the processing that is an estimated best fit.
+      type: object
+      properties:
+        type:
+          description: |
+            The type or category that best describes the media content.  Each of the available types is listed below with
+            a few typical observations about the type of recording environment.
+
+            - conference - speech content, microphone far from talker
+            - interview - speech content, microphone close to talker
+            - lecture - speech content, microphone far from talker, large room
+            - meeting - speech content, microphone close to talker
+            - mobile_phone - variable microphone location
+            - music - musical rather than speech
+            - podcast - mixture of close mic'd speech and some musical content
+            - studio - close mic'd speech content with limited background noise
+            - voice_over or voice_recording - close mic'd speech
+
+          type: string
+          enum:
+            - conference
+            - interview
+            - lecture
+            - meeting
+            - mobile_phone
+            - music
+            - podcast
+            - studio
+            - voice_over
+            - voice_recording
+            - other
+          example: "podcast"
+
+    # ******************************************************************************
+    # '#/components/schemas/AudioSettings' (Request)
+    # ******************************************************************************
+    AudioSettings:
+      description: |
+        Control the audio enhancement algorithms to suit your usage.  There is a
+        boolean value 'enable' setting for each type of audio enhancement.  By 
+        enabling or disabling different enhancements you can optimize the processing
+        for your content.
+
+      type: object
+      properties:
+        loudness:
+          description: |
+            Apply loudness correction to your media to match a 
+            target profile.
+          type: object
+          properties:
+            enable:
+              type: boolean
+              description: |
+                Whether or not to apply loudness correction enhancements
+                to your media.
+              example: true
+            target_level:
+              description: |
+                Loudness level target to conform to.
+              type: number
+              example: -18
+              minimum: -31
+              maximum: -8
+            dialog_intelligence:
+              description: |
+                Whether to use Dolby Dialog Intelligence as a gating technique.
+                See [Gating Techniques](/developers/media-processing/tutorials/monitoring-loudness#gating-techniques)
+                for more details.
+              type: boolean
+              example: true
+            speech_threshold:
+              description: |
+                When using Dolby Dialogue Intelligence the speech threshold
+                is a percentage of speech content in the audio signal to 
+                classify a section as dialog.
+
+                See [Gating Techniques](/developers/media-processing/tutorials/monitoring-loudness#gating-techniques)
+                for more details.
+              type: number
+              format: float
+              example: 15.0
+              minimum: 0
+              maximum: 100
+            peak_limit:
+              description: |
+                The peak level limit to be applied (in dBFS) where values
+                above the limit will be compressed.
+              type: number
+              format: float
+              example: -1.0
+              minimum: -6.0
+              maximum: 0.1
+            peak_reference:
+              description: |
+                Target peak for loudness.  Can be either *sample* as
+                consistent with digital audio or *true_peak* for analog.
+              type: string
+              enum:
+                - true_peak
+                - sample
+        dynamics:
+          description: |
+            Speech dynamics to do basic corrections for troublesome 
+            recordings where the tonality has been skewed by bad microphone 
+            technique or mixing.
+          type: object
+          properties:
+            range_control:
+              description: |
+                Control of over the range for dynamics processing.
+              type: object
+              properties:
+                enable:
+                  description: |
+                    Can disable dynamics processing entirely if not
+                    achieving desired results.
+                  type: boolean
+                  example: true
+                amount:
+                  description: |
+                    Amount of dynamic levelling to apply.
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                    - max
+                  example: medium
+        noise:
+          description: |
+
+            Noise is any unwanted sounds or nuisances discovered when analyzing your
+            content.  This intelligent noise management solution blends
+            two approaches -- noise reduction and speech isolation.  
+
+            Noise Reduction will reduce background static sounds found to be present 
+            consistently across the length of the media content.  This noise is often
+            coming from white noise captured by microphone equipment frequency, 
+            HVAC systems, machines hums, etc.  You may choose to disable static noise
+            reduction to allow speech isolation to be more aggressive at removing
+            noise.
+
+          type: object
+          properties:
+            reduction:
+              description: |
+                Noise reduction is a feature to suppress
+                static background sounds.
+
+              type: object
+              properties:
+                enable:
+                  description: |
+                    Option to disable noise reduction.
+                  type: boolean
+                  example: true
+                amount:
+                  description: |
+                    The amount of noise reduction to apply.  The amount refers
+                    to how aggressive the processing will be.  With a high or
+                    max amount there may be certain media where this could
+                    disrupt the content so you may need to adjust this setting.
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                    - max
+                    - auto
+                  example: auto
+        filter:
+          description: |
+            Filters cut out undesirable content and noises to make
+            speech recordings sound better.
+          type: object
+          properties:
+            dynamic_eq:
+              description: |
+                The Dynamic EQ filter will dynamically adjust
+                frequency, gain, bandwidth, etc. to equalize and compress 
+                the overall spectral balance.
+              type: object
+              properties:
+                enable:
+                  description: |
+                    Enabled by default, but you can turn it off in cases such
+                    as musical content or audio that already has a desirable
+                    spectral balance.
+                  type: boolean
+                  example: true
+            high_pass:
+              description: |
+                The highpass filter removes mechanical thumps and hums that
+                come from low frequencies by removing them and
+                only letting signal above a threshold pass through.  This can make
+                speech recordings sound better.
+              type: object
+              properties:
+                enable:
+                  description: |
+                    Enabled by default, but you can turn it off in cases such
+                    as musical content that may have undesirable results.
+                  type: boolean
+                  example: true
+                frequency:
+                  type: number
+                  description: |
+                    The frequency value you want to use for filtering.  Anything
+                    that falls below this threshold will be removed.
+                  example: 80
+                  minimum: 50
+                  maximum: 120
+            hum:
+              description: |
+                Hum reduction detects and removes hum sounds by looking at
+                peaks in the average amplitude of frequencies over time.  This works
+                particularly well for static hum such as oscillating mains hum, 
+                constant background tones, or soft/low frequency humming.
+              type: object
+              properties:
+                reduction:
+                  description: |
+                    Hum reduction detects and removes hum sounds by looking at
+                    peaks in the average amplitude of frequencies over time.  This works
+                    particularly well for static hum such as oscillating mains hum, 
+                    constant background tones, or soft/low frequency humming.
+                  type: object
+                  properties:
+                    enable:
+                      description: |
+                        Enabled by default, but you can turn it off in cases where a
+                        constant hum is desirable in the media content.
+                      type: boolean
+                      example: true
+        speech:
+          description: |
+            Features that can be used to enhance the quality of
+            dialog or speech found in media.  This includes controls for sibilance
+            and speech isolation.
+
+            When considering unwanted noise discovered when analyzing
+            your content, the intelligent noise management solution will blend
+            static noise reduction with a more aggressive speech isolation dropping
+            any nuisances not attributable to speech.  
+
+            If your content has music, you may want to disable this enhancement.
+
+          type: object
+          properties:
+            isolation:
+              description: |
+                Speech isolation is enabled by default as part of the intelligent
+                noise management.  This type of noise refers to
+                any nuisance sounds not attributable to speech or dialog.
+
+                You can disable this option if you only want static noise
+                reduction to allow more background context sounds to remain
+                in the content.
+
+              type: object
+              properties:
+                enable:
+                  description: |
+                    Option to disable speech isolation.
+                  type: boolean
+                  example: true
+                amount:
+                  description: |
+                    The amount of speech isolation to apply.  The amount refers
+                    to how aggressive the processing will be in a range from 0
+                    to 100.  By default this will range in the 20-80% range
+                    depending on the analysis of your media.  
+
+                    You can set this amount to the extremes if you find content
+                    important to the context is dropped or picked up to focus
+                    more or less on the speech.
+                  type: number
+                  format: int32
+                  minimum: 0
+                  maximum: 100
+                  example: 50
+            sibilance:
+              description: |
+                Sibilance is the characteristic of harsh consonant sounds
+                like "s", "sh", "x", "ch", "t", and "th".
+              type: object
+              properties:
+                reduction:
+                  description: |
+                    Reduce the severity of sibilant over-pronunciation.
+                  type: object
+                  properties:
+                    enable:
+                      description: |
+                        Option to disable sibilance reduction.
+                      type: boolean
+                      example: true
+                    amount:
+                      description: |
+                        The amount of aggressiveness you want the enhancement
+                        to make.  You can dial this up or down depending on
+                        your media characteristics.
+                      type: string
+                      enum:
+                        - low
+                        - medium
+                        - high
+                        - max
+                      example: medium
+            plosive:
+              description: |
+                Plosives are "pops" caused by sounds like "p" being spoken too
+                close to the microphone
+              type: object
+              properties:
+                reduction:
+                  description: |
+                    Reduce the intensity of plosives in speech.
+                  type: object
+                  properties:
+                    enable:
+                      description: |
+                        Enable for plosive reduction.
+                      type: boolean
+                      example: true
+                    amount:
+                      description: |
+                        The amount of aggressiveness you want the enhancement
+                        to make.  You can dial this up or down depending on
+                        your media characteristics.
+                      type: string
+                      enum:
+                        - low
+                        - medium
+                        - high
+                        - max
+                      example: medium  
+            click:
+              description: |
+                Clicks are sounds produced by movement of the mouth before, during or after speech that may
+                be picked up by a microphone during recording.
+              type: object
+              properties:
+                reduction:
+                  description: |
+                      Reduce the severity of clicks in your media.  This can make
+                      speech recordings sound better.
+                  type: object
+                  properties:
+                    enable:
+                      description: |
+                        Controls whether click reduction is enabled. 
+                      type: boolean
+                      example: true
+                    amount:
+                      description: |
+                        Controls how strongly click reduction will be applied to the recorded signal.
+                      type: string
+                      enum:
+                        - low
+                        - medium
+                        - high
+                        - max
+                      example: medium
+
+        music:
+          description: |
+            Features that can be used to enhance the quality of
+            music found in media.
+          type: object
+          properties:
+            detection:
+              description: |
+                Automatically detect music and adjust processing to preserve music.
+              type: object
+              properties:
+                enable:
+                  type: boolean
+                  example: true
+                  description: |
+                    Option to disable music detector.
+
+
+    # ******************************************************************************
+    # '#/components/schemas/GetEnhanceResultsResponse'
+    # ******************************************************************************
+    GetEnhanceResultsResponse:
+      description: Response body for Enhance API.
+      type: object
+      properties:
+        result:
+          $ref: "#/components/schemas/EnhanceResult"
+        path:
+          type: string
+          example: /media/enhance
+        status:
+          $ref: "#/components/schemas/StandardJobResponseStatus"
+        error:
+          $ref: "#/components/schemas/StandardJobResponseError"
+        progress:
+          $ref: "#/components/schemas/StandardJobResponseProgress"
+        api_version:
+          $ref: "#/components/schemas/StandardJobResponseVersion"
+      required:
+        - status
+        - path
+        - progress
+
+    # ******************************************************************************
+    # '#/components/schemas/EnhanceResult' (Response)
+    # ******************************************************************************
+    EnhanceResult:
+      description: |
+        Results from Enhance.
+      type: object
+      properties:
+        version:
+          type: string
+          example: "1.0.0"
+
+    # ******************************************************************************
+    # '#/components/schemas/StandardJobResponse'
+    # ******************************************************************************
+    StandardJobResponse:
+      description: Response to a job request.
+      type: object
+      properties:
+        job_id:
+          description: The identifier for the job.
+          type: string
+          example: a1b2cd34-e5f6-gh78-90ij-k1l23mn4o5p6
+      required:
+        - job_id
+
+    # ******************************************************************************
+    # '#/components/schemas/StandardJobResponseStatus'
+    # ******************************************************************************
+    StandardJobResponseStatus:
+      description: |
+        The status for this job.
+
+        - Pending: media is waiting for an available resource to begin.
+        - Running: media is being processed, check back again soon.
+        - Success: media is complete, check `result` for details.
+        - Failed: media was unable to be processed successfully, check `error` for more details.
+        - InternalError: media was unable to be processed successfully requiring additional investigation.  Contact support@dlby.io if you require assistance.
+      type: string
+      enum:
+        - Pending
+        - Running
+        - Success
+        - Failed
+        - InternalError
+      example: Success
+
+    # ******************************************************************************
+    # '#/components/schemas/StandardJobResponseError'
+    # ******************************************************************************
+    StandardJobResponseError:
+      description: |
+        Describes the cause of a failure (if known).  The status will also
+        be returned as Failed to indicate this state.
+      type: object
+      properties:
+        type:
+          description: A URL that uniquely identifies the problem type.
+          type: string
+        title:
+          description: A human readable description of the error.
+          type: string
+        detail:
+          description: An optional field with more information when available.
+          type: string
+
+    # ******************************************************************************
+    # '#/components/schemas/StandardJobResponseProgress'
+    # ******************************************************************************
+    StandardJobResponseProgress:
+      description: |
+        Indicates estimated percentage of how far along a job is
+        toward completion.
+      type: number
+      minimum: 0
+      maximum: 100
+      example: 100
+
+    StandardJobResponseVersion:
+      description: |
+        Indicates the version string that represents the behavior of a specific
+        release of an API.
+      type: string
+      example: "v1.0"
+
+    # ******************************************************************************
+    # '#/components/schemas/RequestError'
+    # ******************************************************************************
+    RequestError:
+      type: object
+      properties:
+        type:
+          description: A URL that uniquely identifies the problem type.
+          type: string
+          example: "/problmes/validation-error"
+        title:
+          description: A human readable description of the error.
+          type: string
+          example: "Your request parameters didn't validate"
+        status:
+          description: The HTTP response code.
+          type: number
+          example: 400
+        instance:
+          description: The URL of the call for which the error occurred.
+          type: string
+          example: "/media/enhance"
+        detail:
+          description: An optional field with more information depending on the type.
+          type: string
+          example: "job_id is required"
+
+    # ******************************************************************************
+    # '#/components/schemas/Location'
+    # ******************************************************************************
+    Location:
+      description: |
+
+        Specify the location for a media file.  You can specify either a single
+        string or an object with authentication parameters depending on your
+        cloud storage solution.  See [Media Input and Output](/developers/media-processing/tutorials/media-input-and-output) for
+        an more detailed description of all the options.
+
+      oneOf:
+        - type: string
+          description: |
+            You can specify a string such as with one of the following options:
+            * A Dolby dlb:// temporary cloud storage URI.  See [/media/input](/developers/media-processing/api-reference/input) for more details.
+            * A world readable http location
+            * A pre-signed url for popular cloud storage providers such as S3, GCP, etc.
+
+            You can also specify an object with the url and additional authentication
+            details.
+        - type: object
+          description: |
+            You can specify a url along with authentication options for HTTP Basic
+            Authentication or AWS Key/Token authentication.
+          properties:
+            url:
+              type: string
+              description: The URL for the location of your media.
+            auth:
+              description: Authentication details for the appropriate security model.
+              oneOf:
+                - $ref: "#/components/schemas/HTTPAuth"
+                - $ref: "#/components/schemas/AWSAuth"
+          required:
+            - url
+      example:
+        {
+          url: "s3://bucket/object",
+          auth:
+            {
+              key: "aws_access_key_id",
+              secret: "aws_secret_access_key",
+              token: "aws_session_token",
+            },
+        }
+
+    # ******************************************************************************
+    # '#/components/schemas/MediaInputLocation
+    # ******************************************************************************
+    MediaInputLocation:
+      description: Specify the location for an input media file. You can specify either
+        a simple string URI or an object containing the URI and authentication parameters
+        depending on your cloud storage solution. See [Media Input and Output](/developers/media-processing/tutorials/media-input-and-output)
+        for a more detailed description of all the options.
+      anyOf:
+      - title: URL
+        type: string
+        format: uri
+        description: |2
+          You can specify a string such as one of the following options:
+          * A Dolby dlb:// temporary cloud storage URI.  See [/media/input](/developers/media-processing/api-reference/input) for more details.
+          * A world readable http location
+          * A pre-signed URL for popular cloud storage providers such as S3, GCP, etc.
+
+          You can also specify an object with the url and additional authentication details.
+      - title: AWS S3 location
+        type: object
+        description: 'You can specify a URL referring to an AWS S3 resource, along with
+          authentication information.'
+        properties:
+          url:
+            type: string
+            description: The AWS S3 resource URL for the location of your media.
+            pattern: "^(s3\\:\\/\\/[\\w-\\.]+|https\\:\\/\\/([\\w-\\.]+\\.)?s3(-[\\w\\-]+)?\\.amazonaws\\.com)\\/"
+          auth:
+            $ref: "#/components/schemas/AWSAuth"
+          region:
+            $ref: "#/components/schemas/Region"
+        additionalProperties: false
+        required:
+          - url
+      - title: General location
+        type: object
+        description: 'You can specify a URL along with Basic HTTP Authentication.'
+        properties:
+          url:
+            title: URL
+            type: string
+            format: uri
+            description: The URL for the location of your media.
+          auth:
+            $ref: "#/components/schemas/GeneralAuth"
+          region:
+            $ref: "#/components/schemas/Region"
+        additionalProperties: false
+        required:
+          - url
+    
+    Region:
+      description: Specifies the section of the file that the API will process.
+      type: object
+      minProperties: 1
+      properties:
+        start:
+          type: number
+          description: Specifies the start position in seconds. In absence of this,
+            region is identified to be from the beginning of the file to the specified
+            end position.
+          minimum: 0
+        end:
+          type: number
+          description: Specifies the end position in seconds. In absence of this, region
+            is identified to be from the specified start position to the end of file.
+          minimum: 0
+      additionalProperties: false
+
+    GeneralAuth:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The user name or email address used for authentication.
+        password:
+          type: string
+          description: The password or secret used to authenticate.
+      required:
+        - username
+        - password
+
+    # ******************************************************************************
+    # '#/components/schemas/HTTPAuth
+    # ******************************************************************************
+    HTTPAuth:
+      type: object
+      description: Basic HTTP credentials
+      properties:
+        username:
+          type: string
+          description: The user name or email address used for authentication.
+        password:
+          type: string
+          description: The password or secret used to authenticate.
+      required:
+        - username
+        - password
+
+    # ******************************************************************************
+    # '#/components/schemas/AWSAuth
+    # ******************************************************************************
+    AWSAuth:
+      type: object
+      description: AWS credentials.
+      properties:
+        key:
+          type: string
+          description: The AWS client access key.
+        secret:
+          type: string
+          description: The AWS client secret.
+        token:
+          type: string
+          description: The AWS client.
+      required:
+        - key
+        - secret
+
+  parameters:
+    # ******************************************************************************
+    # '#/components/parameters/StandardGetJob'
+    # ******************************************************************************
+
+    StandardGetJob:
+      description: |
+        Use the `job_id` returned from a previous POST response
+        to check on the status of an asynchronous request.
+      name: job_id
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "db682cc6-221c-4fe2-8b48-3e33036f26ca"
+
+  responses:
+    # ******************************************************************************
+    # '#/components/responses/StandardResponse200'
+    # ******************************************************************************
+    StandardResponse200:
+      description: |
+        200 OK
+        The request has been accepted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardJobResponse"
+
+    # ******************************************************************************
+    # '#/components/responses/Standard4XXError'
+    # ******************************************************************************
+    Standard4XXError:
+      description: Usage error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+    StandardError400:
+      description: Bad Request.
+
+
+        The body of the response will give additional details and you may need
+        to double-check the provided parameters.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+    StandardError401:
+      description: Authentication Failed.
+
+
+        Make sure you are providing your API Key in the x-api-key
+        header of the request.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                description: A URL that uniquely identifies the problem type.
+                type: string
+                example: "/problems/api-key-error"
+              title:
+                description: A human readable description of the error.
+                type: string
+                example: "Authentication Failure"
+              status:
+                description: The HTTP response code.
+                type: number
+                example: 401
+              instance:
+                description: The URL of the call for which the error occurred.
+                type: string
+                example: "/media/analyze"
+              detail:
+                description: An optional field with more information depending on the type.
+                type: string
+                example: "Missing API key"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+    StandardError404:
+      description: Not Found.
+
+
+        Check there are no typos in the path being used and that you
+        are calling /media/enhance.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                description: A URL that uniquely identifies the problem type.
+                type: string
+                example: "/problems/not-found"
+              title:
+                description: A human readable description of the error.
+                type: string
+                example: "Not Found"
+              status:
+                description: The HTTP response code.
+                type: number
+                example: 404
+              instance:
+                description: The URL of the call for which the error occurred.
+                type: string
+                example: "/media/analyze"
+              detail:
+                description: An optional field with more information depending on the type.
+                type: string
+                example: "NotFound"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+    StandardError405:
+      description: Method Not Allowed.
+
+
+        Make sure you are making a POST request to start a job
+        and GET request to check the status of a job.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                description: A URL that uniquely identifies the problem type.
+                type: string
+                example: "/problems/method-not-allowed"
+              title:
+                description: A human readable description of the error.
+                type: string
+                example: "Method Not Allowed"
+              status:
+                description: The HTTP response code.
+                type: number
+                example: 405
+              instance:
+                description: The URL of the call for which the error occurred.
+                type: string
+                example: "/media/analyze"
+              detail:
+                description: An optional field with more information depending on the type.
+                type: string
+                example: "Method Not Allowed"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+    # ******************************************************************************
+    # '#/components/responses/Standard5XXError'
+    # ******************************************************************************
+    Standard5XXError:
+      description: Server error.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                description: A URL that uniquely identifies the problem type.
+                type: string
+                example: "/problems/internal-error"
+              title:
+                description: A human readable description of the error.
+                type: string
+                example: "An internal service error has occurred"
+              status:
+                description: The HTTP response code.
+                type: number
+                example: 500
+              instance:
+                description: The URL of the call for which the error occurred.
+                type: string
+                example: "/media/analyze"
+              detail:
+                description: An optional field with more information depending on the type.
+                type: string
+                example: "InternalError"
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RequestError"
+
+  securitySchemes:
+    "x-api-key":
+      name: x-api-key
+      type: apiKey
+      in: header
+      description: |
+        Every request must include a header `x-api-key` with your
+        own individual API Key.
